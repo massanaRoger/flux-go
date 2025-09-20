@@ -10,6 +10,7 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+coverage.html
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
@@ -58,3 +59,9 @@ postgres_data/
 # Temporary files
 tmp/
 temp/
+
+# Postman collections
+*.postman_collection.json
+
+# Generated code
+internal/adapters/database/generated/

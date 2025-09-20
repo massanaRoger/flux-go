@@ -1,6 +1,9 @@
-.PHONY: build run-api run-scheduler run-worker run-dashboard clean db-up db-migrate db-reset
+.PHONY: build run-api run-scheduler run-worker run-dashboard clean db-up db-migrate db-reset sqlc-generate test test-integration test-unit
 
-build:
+sqlc-generate:
+	go run github.com/sqlc-dev/sqlc/cmd/sqlc@latest generate
+
+build: sqlc-generate
 	go build -o bin/api-server ./cmd/api-server
 	go build -o bin/scheduler ./cmd/scheduler
 	go build -o bin/worker ./cmd/worker
@@ -33,5 +36,17 @@ db-create-migration:
 db-reset:
 	docker-compose down -v && docker-compose up -d && sleep 5 && make db-migrate
 
+test: test-unit test-integration
+
+test-unit:
+	go test -v -race -short ./...
+
+test-integration:
+	go test -v -race ./internal/adapters/database/... ./internal/adapters/http/...
+
+test-coverage:
+	go test -v -race -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
+
 clean:
-	rm -rf bin/
+	rm -rf bin/ coverage.out coverage.html

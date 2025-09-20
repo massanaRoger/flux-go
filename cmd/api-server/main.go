@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"flux/internal/adapters/database"
+	httpAdapter "flux/internal/adapters/http"
 	"flux/internal/adapters/queue"
+	"flux/internal/app"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,19 +20,21 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	db, err := database.NewPostgresConnection()
+	dbPool, err := database.NewPostgresPool(ctx)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	defer db.Close()
+	defer dbPool.Close()
 
-	jobRepo := database.NewPostgresJobRepository(db)
+	jobRepo := database.NewPostgresJobRepository(dbPool)
 	queueBroker := queue.NewRedisQueueBroker()
 	defer queueBroker.Close()
 
-	// TODO: Initialize services and handlers
-	_ = jobRepo
-	_ = queueBroker
+	// Initialize application services
+	jobService := app.NewJobService(jobRepo)
+
+	// Initialize handlers
+	jobHandler := httpAdapter.NewJobHandler(jobService)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -56,11 +60,10 @@ func main() {
 	// API v1 routes
 	v1 := router.Group("/api/v1")
 	{
-		// TODO: Use proper handlers
-		v1.POST("/jobs", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{}) })
-		v1.GET("/jobs/:id", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{}) })
-		v1.GET("/jobs", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{}) })
-		v1.DELETE("/jobs/:id", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{}) })
+		v1.POST("/jobs", jobHandler.CreateJob)
+		v1.GET("/jobs/:id", jobHandler.GetJob)
+		v1.GET("/jobs", jobHandler.ListJobs)
+		v1.DELETE("/jobs/:id", jobHandler.DeleteJob)
 	}
 
 	srv := &http.Server{
@@ -89,4 +92,3 @@ func main() {
 
 	log.Println("Server exited")
 }
-

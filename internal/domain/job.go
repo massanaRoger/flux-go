@@ -2,7 +2,12 @@ package domain
 
 import (
 	"encoding/json"
+	"errors"
 	"time"
+)
+
+var (
+	ErrJobNotFound = errors.New("job not found")
 )
 
 type JobStatus string
