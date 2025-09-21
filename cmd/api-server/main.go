@@ -14,6 +14,7 @@ import (
 	"flux/internal/adapters/queue"
 	"flux/internal/app"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 )
 
 func main() {
@@ -26,8 +27,14 @@ func main() {
 	}
 	defer dbPool.Close()
 
+	redisAddr := getEnv("REDIS_ADDR", "localhost:6379")
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: redisAddr,
+	})
+	defer redisClient.Close()
+
 	jobRepo := database.NewPostgresJobRepository(dbPool)
-	queueBroker := queue.NewRedisQueueBroker()
+	queueBroker := queue.NewRedisQueueBroker(redisClient)
 	defer queueBroker.Close()
 
 	// Initialize application services
@@ -91,4 +98,11 @@ func main() {
 	}
 
 	log.Println("Server exited")
+}
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }

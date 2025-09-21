@@ -133,6 +133,49 @@ func (r *PostgresJobRepository) GetJobsReadyToRun(ctx context.Context, limit int
 	return domainJobs, nil
 }
 
+func (r *PostgresJobRepository) GetScheduledJobs(ctx context.Context, limit int) ([]*domain.Job, error) {
+	jobs, err := r.queries.GetScheduledJobs(ctx, int32(limit))
+	if err != nil {
+		return nil, err
+	}
+
+	domainJobs := make([]*domain.Job, len(jobs))
+	for i, job := range jobs {
+		domainJobs[i] = r.dbJobToDomain(job)
+	}
+
+	return domainJobs, nil
+}
+
+func (r *PostgresJobRepository) GetTimedOutJobs(ctx context.Context, limit int) ([]*domain.Job, error) {
+	jobs, err := r.queries.GetTimedOutJobs(ctx, int32(limit))
+	if err != nil {
+		return nil, err
+	}
+
+	domainJobs := make([]*domain.Job, len(jobs))
+	for i, job := range jobs {
+		domainJobs[i] = r.dbJobToDomain(job)
+	}
+
+	return domainJobs, nil
+}
+
+func (r *PostgresJobRepository) UpdateJobStatus(ctx context.Context, jobID string, status domain.JobStatus) error {
+	jobUUID, err := uuid.Parse(jobID)
+	if err != nil {
+		return err
+	}
+
+	params := generated.UpdateJobStatusParams{
+		ID:     pgtype.UUID{Bytes: jobUUID, Valid: true},
+		Status: string(status),
+	}
+
+	_, err = r.queries.UpdateJobStatus(ctx, params)
+	return err
+}
+
 func (r *PostgresJobRepository) domainJobToCreateParams(job *domain.Job) generated.CreateJobParams {
 	jobUUID, _ := uuid.Parse(job.ID)
 

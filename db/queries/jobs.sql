@@ -63,3 +63,17 @@ RETURNING *;
 
 -- name: GetJobByIdempotencyKey :one
 SELECT * FROM jobs WHERE idempotency_key = $1;
+
+-- name: GetScheduledJobs :many
+SELECT * FROM jobs
+WHERE status = 'scheduled'
+  AND schedule_at <= NOW()
+ORDER BY priority DESC, schedule_at ASC
+LIMIT $1;
+
+-- name: GetTimedOutJobs :many
+SELECT * FROM jobs
+WHERE status = 'running'
+  AND updated_at < NOW() - INTERVAL '1 second' * visibility_timeout_sec
+ORDER BY updated_at ASC
+LIMIT $1;

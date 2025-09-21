@@ -9,6 +9,9 @@ type JobRepository interface {
 	DeleteJob(ctx context.Context, id string) error
 	ListJobs(ctx context.Context, queue string, status JobStatus, limit int) ([]*Job, error)
 	GetJobsReadyToRun(ctx context.Context, limit int) ([]*Job, error)
+	GetScheduledJobs(ctx context.Context, limit int) ([]*Job, error)
+	GetTimedOutJobs(ctx context.Context, limit int) ([]*Job, error)
+	UpdateJobStatus(ctx context.Context, jobID string, status JobStatus) error
 }
 
 type JobRunRepository interface {
@@ -30,3 +33,4 @@ type WorkflowRunRepository interface {
 	GetWorkflowRun(ctx context.Context, id string) (*WorkflowRun, error)
 	UpdateWorkflowRun(ctx context.Context, run *WorkflowRun) error
 }
+
