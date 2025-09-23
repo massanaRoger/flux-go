@@ -10,8 +10,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/go-redis/redis/v8"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
@@ -35,7 +35,7 @@ func main() {
 	defer redisClient.Close()
 
 	jobRepo := database.NewPostgresJobRepository(db)
-	queueBroker := queue.NewRedisQueueBroker(redisClient)
+	queueBroker := queue.NewRedisQueueBrokerWithClient(redisClient)
 
 	schedulerService := app.NewSchedulerService(jobRepo, queueBroker)
 	schedulerRunner := app.NewSchedulerRunner(schedulerService)

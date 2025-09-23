@@ -34,7 +34,7 @@ func main() {
 	defer redisClient.Close()
 
 	jobRepo := database.NewPostgresJobRepository(dbPool)
-	queueBroker := queue.NewRedisQueueBroker(redisClient)
+	queueBroker := queue.NewRedisQueueBrokerWithClient(redisClient)
 	defer queueBroker.Close()
 
 	// Initialize application services
